@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Solicitação de Serviços</title>
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .form-container { max-width: 800px; background-color: white; padding: 2.5rem; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        #map { height: 450px; width: 100%; border-radius: 0.5rem; }
+        .btn-primary { background-color: #4f46e5; border-color: #4f46e5; }
+        .btn-primary:hover { background-color: #4338ca; border-color: #4338ca; }
+        .select2-container--bootstrap-5 .select2-selection { min-height: calc(1.5em + 1rem + 2px); }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center min-vh-100 p-3">
+
+    <div class="container form-container">
+        <div class="text-center mb-4">
+            <h1 class="h2 fw-bold text-dark">Solicitação de Serviços de Jornalismo e Design</h1>
+            <p class="text-muted mt-2">Preencha as informações abaixo para organizar e acompanhar seu evento ou projeto.</p>
+        </div>
+
+        <form id="serviceRequestForm" class="needs-validation" novalidate>
+            <!-- Setor/Unidade com Select2 -->
+            <div class="mb-3">
+                <label for="setor" class="form-label fw-medium">Qual setor/unidade está solicitando?</label>
+                <select id="setor" name="setor" required class="form-select">
+                    <option></option>
+                    <option value="Almoxarifado">Almoxarifado</option>
+                    <option value="RH">Recursos Humanos (RH)</option>
+                    <option value="Protocolo">Protocolo</option>
+                    <option value="TI">Tecnologia da Informação (TI)</option>
+                    <option value="Financeiro">Financeiro</option>
+                    <option value="Marketing">Marketing</option>
+                </select>
+            </div>
+            
+            <!-- E-mail do Setor -->
+            <div class="mb-3">
+                <label for="email" class="form-label fw-medium">E-mail do setor/unidade</label>
+                <select name="email" id="email" required class="form-select"></select>
+                <div class="form-text">Selecione um e-mail da lista ou digite um novo.</div>
+            </div>
+
+            <!-- Nome do Evento -->
+            <div class="mb-3">
+                <label for="eventName" class="form-label fw-medium">Nome do evento/atividade</label>
+                <input type="text" name="eventName" id="eventName" required class="form-control" placeholder="Ex: Lançamento do Novo Portal">
+            </div>
+
+            <!-- Data do Evento -->
+            <div class="mb-3">
+                <label for="eventDate" class="form-label fw-medium">Data/período do evento</label>
+                <input type="date" name="eventDate" id="eventDate" required class="form-control">
+            </div>
+
+            <!-- Horário -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="startTime" class="form-label fw-medium">Horário de início</label>
+                    <input type="time" name="startTime" id="startTime" required class="form-control">
+                </div>
+                <div class="col-md-6 mt-3 mt-md-0">
+                    <label for="endTime" class="form-label fw-medium">Horário de término</label>
+                    <input type="time" name="endTime" id="endTime" required class="form-control">
+                </div>
+            </div>
+
+            <!-- Endereço -->
+            <div class="mb-3">
+                <label for="address" class="form-label fw-medium">Endereço do evento/atividade</label>
+                <div class="input-group">
+                    <input type="text" name="address" id="address" class="form-control" placeholder="Digite o endereço ou escolha no mapa">
+                    <button type="button" id="openMapBtn" class="btn btn-outline-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-geo-alt-fill" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upload de Programação -->
+            <div class="mb-3">
+                <label for="scheduleUpload" class="form-label fw-medium">Programação do evento/atividade (opcional)</label>
+                <input type="file" name="scheduleUpload" id="scheduleUpload" class="form-control">
+                <div class="form-text">Arquivo PDF, DOCX ou PNG. Máximo de 10MB.</div>
+            </div>
+
+            <!-- Modalidade -->
+            <div class="mb-3">
+                <label class="form-label fw-medium d-block">Modalidade do evento/atividade</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="modality" id="presencial" value="Presencial" required>
+                    <label class="form-check-label" for="presencial">Presencial</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="modality" id="online" value="Online">
+                    <label class="form-check-label" for="online">Online / Remoto</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="modality" id="hibrido" value="Hibrido">
+                    <label class="form-check-label" for="hibrido">Híbrido</label>
+                </div>
+            </div>
+
+            <!-- Botão de Envio -->
+            <div class="d-grid pt-3">
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
+                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    <span id="submitBtnText">Enviar Solicitação</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal do Mapa -->
+    <div class="modal fade" id="mapModal" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header"><h5 class="modal-title">Selecione o Endereço</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+          <div class="modal-body"><div id="map"></div></div>
+          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button><button type="button" id="confirmAddressBtn" class="btn btn-primary">Confirmar</button></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal de Resultado -->
+    <div class="modal fade" id="resultModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-body text-center p-4"><h3 id="resultTitle" class="h4 fw-bold"></h3><p id="resultText" class="text-muted"></p><button type="button" class="btn btn-primary mt-3" data-bs-dismiss="modal">Fechar</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- CONFIGURAÇÕES GERAIS ---
+            const GOOGLE_SHEET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3OAyirmb2pqPJoqIGRMViiYSJ9GP_tIFa-Jv6AdxsWd9FCJFJiaWtjS5xyNOdAsKeDw/exec';
+            
+            // INSIRA SUAS CHAVES DO EMAILJS AQUI
+            const EMAILJS_SERVICE_ID = 'service_6a82wxq'; 
+            const EMAILJS_TEMPLATE_ID = 'template_5e5776t'; 
+            const EMAILJS_PUBLIC_KEY = 'lQjDkN0b3PybDYTq8'; 
+            
+            // --- INICIALIZAÇÃO DE ELEMENTOS ---
+            const form = document.getElementById('serviceRequestForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+            const spinner = submitBtn.querySelector('.spinner-border');
+            const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+
+            // Inicializa EmailJS
+            emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
+            // Inicializa Select2
+            $('#setor').select2({ theme: 'bootstrap-5', placeholder: 'Selecione um setor' });
+            const emailSelect = $('#email').select2({ theme: 'bootstrap-5', placeholder: 'Carregando os emails, espere...', tags: true });
+
+            // --- LÓGICA DA PLANILHA GOOGLE ---
+            function loadEmailsFromSheet() {
+                fetch(GOOGLE_SHEET_SCRIPT_URL)
+                    .then(response => response.json())
+                    .then(emails => {
+                        emailSelect.empty();
+                        if (Array.isArray(emails)) {
+                            emails.forEach(email => emailSelect.append(new Option(email, email, false, false)));
+                        }
+                        emailSelect.trigger('change');
+                        $('#email').select2({ theme: 'bootstrap-5', placeholder: 'Selecione ou digite um e-mail', tags: true });
+                    }).catch(error => console.error('Erro ao carregar e-mails:', error));
+            }
+            loadEmailsFromSheet();
+
+            // --- LÓGICA DO MAPA ---
+            const mapModal = new bootstrap.Modal(document.getElementById('mapModal'));
+            const addressInput = document.getElementById('address');
+            let map, marker, selectedAddress;
+
+            function formatAddress(addr) {
+                if (!addr) return '';
+                const parts = [];
+                if (addr.road) parts.push(addr.road);
+                if (addr.house_number) parts.push(addr.house_number);
+                if (addr.suburb || addr.neighbourhood) parts.push(addr.suburb || addr.neighbourhood);
+                return parts.join(', ');
+            }
+
+            function updateMarkerAndAddress(latlng, addr) {
+                if (marker) marker.setLatLng(latlng); else marker = L.marker(latlng).addTo(map);
+                selectedAddress = formatAddress(addr);
+                marker.bindPopup(`<b>Endereço:</b><br>${selectedAddress || 'Não encontrado'}`).openPopup();
+                map.setView(latlng, 17);
+            }
+
+            function initMap() {
+                if (!map) {
+                    map = L.map('map').setView([-1.4558, -48.5039], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    L.Control.geocoder({ defaultMarkGeocode: false, placeholder: 'Pesquisar endereço...' })
+                        .on('markgeocode', e => updateMarkerAndAddress(e.geocode.center, e.geocode.properties.address))
+                        .addTo(map);
+                    map.on('click', e => {
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
+                            .then(res => res.json()).then(data => updateMarkerAndAddress(e.latlng, data.address));
+                    });
+                }
+            }
+            document.getElementById('openMapBtn').addEventListener('click', () => mapModal.show());
+            document.getElementById('mapModal').addEventListener('shown.bs.modal', () => setTimeout(() => { initMap(); map.invalidateSize(); }, 100));
+            document.getElementById('confirmAddressBtn').addEventListener('click', () => {
+                if (selectedAddress) { addressInput.value = selectedAddress; mapModal.hide(); }
+                else { alert('Selecione um local no mapa.'); }
+            });
+
+            // --- LÓGICA DE ENVIO DO FORMULÁRIO ---
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!form.checkValidity()) {
+                    e.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
+                }
+                setLoading(true);
+
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                data.email = emailSelect.val(); // Garante que o valor do select2 seja pego
+                
+                // ETAPA 1: Salvar na Planilha Google
+                fetch(GOOGLE_SHEET_SCRIPT_URL, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    body: new URLSearchParams(data)
+                })
+                .then(res => res.json())
+                .then(resData => {
+                    if (resData.result === 'success') {
+                        console.log('Dados salvos na planilha. Enviando e-mail...');
+                        // ETAPA 2: Enviar e-mail com EmailJS
+                        sendConfirmationEmail(data);
+                    } else { throw new Error(resData.error); }
+                })
+                .catch(error => {
+                    console.error('Erro ao salvar na planilha:', error);
+                    showResultModal(false, 'Ocorreu um erro ao salvar a solicitação na planilha.');
+                    setLoading(false);
+                });
+            });
+
+            function sendConfirmationEmail(data) {
+                if (EMAILJS_SERVICE_ID === 'SEU_SERVICE_ID') {
+                    showResultModal(true, 'Solicitação salva na planilha, mas o envio de e-mail não está configurado.');
+                    setLoading(false);
+                    return;
+                }
+                
+                // Parâmetros para o template do EmailJS
+                const templateParams = {
+                    setor: data.setor,
+                    email: data.email,
+                    eventName: data.eventName,
+                    eventDate: data.eventDate,
+                    startTime: data.startTime,
+                    endTime: data.endTime,
+                    address: data.address,
+                    modality: data.modality,
+                    admin_email: 'ascom.fasepa@gmail.com' // E-mail do admin para o template
+                };
+
+                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                    .then(response => {
+                        console.log('E-mail enviado!', response.status, response.text);
+                        showResultModal(true, 'Sua solicitação foi salva e um e-mail de confirmação foi enviado!');
+                        // Limpa o formulário apenas se tudo deu certo
+                        form.reset();
+                        $('#setor').val(null).trigger('change');
+                        emailSelect.val(null).trigger('change');
+                        form.classList.remove('was-validated');
+                        loadEmailsFromSheet();
+                    })
+                    .catch(err => {
+                        console.error('Falha ao enviar e-mail:', err);
+                        showResultModal(false, 'A solicitação foi salva, mas houve uma falha ao enviar o e-mail de confirmação.');
+                    })
+                    .finally(() => {
+                        setLoading(false);
+                    });
+            }
+
+            function setLoading(isLoading) {
+                submitBtn.disabled = isLoading;
+                spinner.classList.toggle('d-none', !isLoading);
+                submitBtnText.textContent = isLoading ? 'Enviando...' : 'Enviar Solicitação';
+            }
+
+            function showResultModal(success, message) {
+                document.getElementById('resultTitle').textContent = success ? 'Sucesso!' : 'Erro!';
+                document.getElementById('resultText').textContent = message;
+                resultModal.show();
+            }
+        });
+    </script>
+</body>
+</html>
